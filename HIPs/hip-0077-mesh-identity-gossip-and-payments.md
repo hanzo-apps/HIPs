@@ -92,7 +92,7 @@ post-quantum surface.
 | `PQMode`         | env        | classical | threshold lattice                    | per-validator PQ      | rollup            | DKG required                            | suitable for open public chain? |
 |------------------|------------|-----------|--------------------------------------|-----------------------|-------------------|-----------------------------------------|---------------------------------|
 | `PQModeBLS`      | `bls`      | BLS       | —                                    | —                     | —                 | none                                    | no (no PQ)                      |
-| `PQModeRingtail` | `ringtail` | BLS       | Ringtail / **BLAKE3** (academic)     | —                     | —                 | trusted dealer                          | **no** (no DKG-with-rotation)   |
+| `PQModeCorona` | `corona` | BLS       | Corona / **BLAKE3** (academic)     | —                     | —                 | trusted dealer                          | **no** (no DKG-with-rotation)   |
 | `PQModePulsar`   | `pulsar`   | BLS       | Pulsar / **SHA-3 cSHAKE256** (prod)  | —                     | —                 | Pedersen DKG over R\_q + proactive resharing | yes                       |
 | `PQModeQuasar`   | `quasar`   | BLS       | Pulsar / SHA-3                       | ML-DSA-65 (rolled)    | Groth16 / Z-Chain | Pedersen DKG over R\_q + proactive resharing | yes (**default**)         |
 | `PQModeMLDSA`    | `mldsa`    | BLS       | —                                    | ML-DSA-65 raw         | —                 | none                                    | yes (audit-grade fallback)      |
@@ -101,7 +101,7 @@ Two production progressions:
 
 ```
 public chains, open validator set:    BLS → Pulsar → Quasar
-fixed federations / bridge MPC:       BLS → Ringtail
+fixed federations / bridge MPC:       BLS → Corona
 ```
 
 `MLDSA` is an audit-grade side path: every validator's raw
@@ -109,13 +109,13 @@ ML-DSA-65 sig in every cert (~N·3309 B). Use it transitionally if
 the Z-Chain Groth16 witness isn't wired yet, or when an external
 auditor needs the per-validator log.
 
-#### Pulsar vs Ringtail — what's actually different
+#### Pulsar vs Corona — what's actually different
 
 Both implement the same 2-round LWE threshold-signature **core
 algorithm**. They diverge on the hash family and the production
 lifecycle:
 
-| dimension          | Ringtail (`github.com/luxfi/ringtail`) | Pulsar (`github.com/luxfi/pulsar`)                           |
+| dimension          | Corona (`github.com/luxfi/corona`) | Pulsar (`github.com/luxfi/pulsar`)                           |
 |--------------------|----------------------------------------|--------------------------------------------------------------|
 | canonical hash     | **BLAKE3** (academic upstream)         | **SHA-3 (cSHAKE256 / KMAC256 / TupleHash256, FIPS 202 + SP 800-185)** |
 | DKG                | trusted dealer (fixed federation)      | Pedersen DKG over R\_q with proper hiding                    |
@@ -125,7 +125,7 @@ lifecycle:
 | fork history       | upstream academic port                 | production fork that **will keep diverging** as protocol matures |
 
 The modes are kept distinct on purpose: an open public chain that
-reused Ringtail's trusted-dealer DKG would be unable to rotate its
+reused Corona's trusted-dealer DKG would be unable to rotate its
 validator set without a manual ceremony, and an audit fixture that
 wanted byte-identical KATs against the academic spec needs the
 BLAKE3 path. We treat them as first-class siblings, not as "old vs
@@ -136,9 +136,9 @@ and `PQMode.SuitableForPublicChain()` make the distinction queryable.
 > hash configuration eligible for any NIST-track submission (MPTC IR
 > 8214C §4.6 lists the approved symmetric primitives: AES, Ascon, SHA-2,
 > SHA-3, SHAKE/cSHAKE, HMAC/KMAC/CMAC/GMAC). BLAKE3 deltas, including
-> `Pulsar-BLAKE3` legacy and Ringtail's BLAKE3 academic profile, are
+> `Pulsar-BLAKE3` legacy and Corona's BLAKE3 academic profile, are
 > **product/experimental** profiles only. Pulsar keeps the BLAKE3 suite
-> non-normative and marked "NOT for production"; Ringtail's BLAKE3
+> non-normative and marked "NOT for production"; Corona's BLAKE3
 > profile is fixed-federation only and never intended for the Lux
 > primary network.
 
@@ -191,7 +191,7 @@ The orthogonal building blocks:
 | block                                          | classical? | PQ? | cost                          |
 |------------------------------------------------|------------|-----|-------------------------------|
 | BLS aggregate                                  | ✓          |     | 48 B, pre-quantum only        |
-| Threshold lattice (Ringtail OR Pulsar variant) |            | ✓   | O(1) post-DKG                 |
+| Threshold lattice (Corona OR Pulsar variant) |            | ✓   | O(1) post-DKG                 |
 | ML-DSA-65 per validator                        |            | ✓   | linear in N                   |
 | Groth16 rollup of ML-DSA → Z-Chain             |            | ✓   | ~192 B + verifier cost        |
 
@@ -199,7 +199,7 @@ Five practical modes cover the design space:
 
 ```
 BLS only                                            = bls
-BLS + Ringtail   (BLAKE3, trusted dealer)           = ringtail   (federations)
+BLS + Corona   (BLAKE3, trusted dealer)           = corona   (federations)
 BLS + Pulsar     (SHA-3, Pedersen DKG)              = pulsar     (public-chain floor)
 BLS + Pulsar + Z-Chain Groth16(ML-DSA)              = quasar     (default)
 BLS + per-validator ML-DSA (no threshold)           = mldsa      (audit fallback)
@@ -213,7 +213,7 @@ The other on-paper combinations are redundant or strictly weaker:
 - `BLS + Groth16 rollup only` (no threshold) — strictly weaker
   than Quasar at the same cert size, since Quasar gets the
   threshold layer for free.
-- `BLS + per-validator ML-DSA + Pulsar/Ringtail` — strictly
+- `BLS + per-validator ML-DSA + Pulsar/Corona` — strictly
   dominated by Quasar at much larger cert size; `mldsa` already
   covers the no-Z-Chain transitional case.
 
@@ -237,7 +237,7 @@ params := config.DefaultParams().WithPQMode(config.PQModeQuasar)
 params := config.DefaultParams().WithPostQuantum(true)
 // true  -> PQModeQuasar   (strongest available)
 // false -> PQModeBLS      (classical)
-// for the middle three (ringtail / pulsar / mldsa) call WithPQMode.
+// for the middle three (corona / pulsar / mldsa) call WithPQMode.
 
 // Env override (highest priority, no rebuild needed):
 //   LUX_CONSENSUS_PQ_MODE=quasar
@@ -255,11 +255,11 @@ under HIP-0077 MUST default to `PostQuantum = true`
 - The mesh's identity layer already uses ML-DSA-65; the consensus
   layer running anything less than `Pulsar` would be a strictly
   weaker link in the same chain of trust.
-- Ringtail keeps cert size O(1), so the cost of going from `Pulsar`
+- Corona keeps cert size O(1), so the cost of going from `Pulsar`
   to `Quasar` is one extra threshold signature per finality round
   — well inside the budget for a mesh that expects ms-grade
   finality on a few-dozen-validator quorum.
-- Defense-in-depth: a future break of either ML-DSA or Ringtail
+- Defense-in-depth: a future break of either ML-DSA or Corona
   (lattice cryptanalysis advance) does not lose the mesh; `Quasar`
   is the only mode that survives loss of one lattice primitive.
 
@@ -267,7 +267,7 @@ Operators with a hard latency budget MAY opt down to `Pulsar`
 (threshold lattice only, no Z-Chain witness). Those needing every
 validator's raw ML-DSA signature in the cert (auditor flow) MAY opt
 sideways to `MLDSA` — at the price of N·3309 B per cert. They MUST
-NOT opt down to `BLS` (no PQ surface) or `Ringtail` (trusted-dealer
+NOT opt down to `BLS` (no PQ surface) or `Corona` (trusted-dealer
 DKG, unsuitable for an open validator set) while participating in
 any production Hanzo mesh.
 
@@ -276,7 +276,7 @@ Decision tree for operators:
 ```
 open public chain (epoch rotation, no trusted dealer)?
    no — fixed federation / bridge MPC
-        → ringtail                  (academic BLAKE3, trusted dealer)
+        → corona                  (academic BLAKE3, trusted dealer)
    yes ↓
    need any PQ?
      no  → bls                      (benchmark only; rejected on prod meshes)
@@ -301,7 +301,7 @@ parameterised at the three FIPS 204 levels: `Pulsar-M-44`, `Pulsar-M-65`,
 | High-value roots (governance, bridges)  | Pulsar-M-87    | NIST PQ Cat 5, low frequency       |
 | Devnet / testnet / CI                   | Pulsar-M-44    | NIST PQ Cat 2, fast                |
 | Audit / FIPS-only fallback              | raw ML-DSA-65  | single-party, FIPS 204 module      |
-| Federation / bridge MPC                 | Ringtail       | trusted dealer, no DKG cost        |
+| Federation / bridge MPC                 | Corona       | trusted dealer, no DKG cost        |
 
 `Pulsar-M-65` is the public-chain default. `Pulsar-M-87` is reserved
 for roots that ship at epoch / governance / bridge cadence (low TPS,
@@ -310,10 +310,10 @@ and any production Hanzo mesh** — devnet / CI only — because Category 2
 is below the floor Hanzo commits to for any chain that anchors real
 balances.
 
-The fallback profiles (`raw ML-DSA-65` and `Ringtail`) MUST NOT be
+The fallback profiles (`raw ML-DSA-65` and `Corona`) MUST NOT be
 silently substituted for the Pulsar-M production profile on a public
 chain. They are explicit operator opt-ins, gated through the existing
-`PQMode` selection (`mldsa` and `ringtail` respectively).
+`PQMode` selection (`mldsa` and `corona` respectively).
 
 ## Specification
 
@@ -655,7 +655,7 @@ NIST PQC standardisation snapshot (2026-05):
 
 | Pulsar-M (M-LWE) | target Class N1 (signing) + N4 (ML keygen / DKG) — IF the threshold-produced signature verifies under unmodified FIPS 204 ML-DSA.Verify. Output interchangeability is the headline pitch. Falls back to Class S if interchangeability cannot be achieved. |
 | Pulsar (R-LWE) | target Class S1/S4 — special threshold-friendly primitive. Not output-interchangeable with any NIST-approved primitive. Submitted alongside Pulsar-M but with a different framing. |
-| Ringtail (R-LWE academic) | not submitted. Federation-MPC use case only. Trusted-dealer DKG + BLAKE3 hash both rule it out of MPTC. |
+| Corona (R-LWE academic) | not submitted. Federation-MPC use case only. Trusted-dealer DKG + BLAKE3 hash both rule it out of MPTC. |
 | ML-DSA-65 raw | already FIPS 204; we ship as the audit / FIPS-spirit fallback (the `mldsa` PQMode). No NIST submission needed; we just consume the standard. |
 | BLS-12-381 | not on any NIST track. Used for the classical fast path only; no FIPS claim. |
 
@@ -688,8 +688,8 @@ NOW → 2026-Jul-20      preview writeup
 
 Canonical citations (verified against ePrint and conference proceedings):
 
-- **Ringtail**, Boschini, Kaviani, Lai, Malavolta, Takahashi, Tibouchi —
-  *"Ringtail: Practical Two-Round Threshold Signatures from Learning
+- **Corona**, Boschini, Kaviani, Lai, Malavolta, Takahashi, Tibouchi —
+  *"Corona: Practical Two-Round Threshold Signatures from Learning
   with Errors"* — Cryptology ePrint Archive 2024/1113.
 - **GKS24**, Gür, Katz, Silde — *"Two-Round Threshold Lattice-Based
   Signatures from Threshold Homomorphic Encryption"* — PQCrypto 2024,

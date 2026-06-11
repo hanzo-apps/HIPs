@@ -212,7 +212,7 @@ Baseline references:
 - Quorus — NIST MPTC preview (primary baseline).
 - Mithril — NIST MPTC preview (small-N benchmark).
 - Olingo — ePrint 2025/1789 (robustness reference).
-- Boschini, Kaviani, Lai, Malavolta, Takahashi, Tibouchi — *Ringtail* — ePrint 2024/1113 (R-LWE protocol skeleton).
+- Boschini, Kaviani, Lai, Malavolta, Takahashi, Tibouchi — *Corona* — ePrint 2024/1113 (R-LWE protocol skeleton).
 - Pulsar-M technical specification — `~/work/lux/pulsar-m/spec/pulsar-m.tex`.
 - HIP-0077 — Mesh Identity (parent).
 - HIP-0078 — Z-Chain (identity rollup that anchors DKG transcripts + group keys).

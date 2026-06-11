@@ -81,16 +81,16 @@ All 13 cryptographic layers are deployed on devnet, testnet, and mainnet.
 | 3 | S3 backup | age ML-KEM-768+X25519 (`age1pq` recipients) | Safe (FIPS 203) | FIPS 203 | Deployed |
 | 4 | TLS | X25519MLKEM768 first curve (ingress + MPC inter-node) | Safe (hybrid PQ) | FIPS 203 | Deployed |
 | 5 | JWT signing | ML-DSA-65 signing + validation via JWKS | Safe (Module-LWE+SIS) | FIPS 204 | Deployed |
-| 6 | Consensus (Quasar) | BLS + Ringtail + ML-DSA -- three hardness assumptions | Safe (triple hybrid) | FIPS 204 | Deployed |
+| 6 | Consensus (Quasar) | BLS + Corona + ML-DSA -- three hardness assumptions | Safe (triple hybrid) | FIPS 204 | Deployed |
 | 7 | EVM tx (Smart Account) | SafeMLDSASigner via ML-DSA precompile (ERC-1271 + ERC-4337) | Safe (FIPS 204) | FIPS 204 | Deployed |
 | 8 | EVM tx (EOA) | secp256k1 ECDSA (wallet compat, PQ finality via Quasar) | Not PQ-safe (mitigated) | -- | EVM constraint |
 | 9 | MPC transport | PQ TLS (X25519MLKEM768) | Safe (hybrid PQ) | FIPS 203 | Deployed |
 | 10 | MPC custody | PQ KEM encrypted key shares + Cloud HSM (FIPS 140-2 L3) | Safe (hardware isolation) | FIPS 203, FIPS 140-2 | Deployed |
-| 11 | Threshold signing | CGGMP21 (ECDSA), FROST (EdDSA), BLS, Ringtail (PQ lattice) | Safe (Ringtail PQ) | -- | Deployed |
-| 12 | On-chain precompiles | ML-DSA, ML-KEM, SLH-DSA, Ringtail, PQCrypto unified | Safe (all three FIPS) | FIPS 203/204/205 | Deployed |
-| 13 | Smart contracts | SafeMLDSASigner, SafeRingtailSigner, QuantumSafe base | Safe (precompile-backed) | FIPS 204 | Deployed |
+| 11 | Threshold signing | CGGMP21 (ECDSA), FROST (EdDSA), BLS, Corona (PQ lattice) | Safe (Corona PQ) | -- | Deployed |
+| 12 | On-chain precompiles | ML-DSA, ML-KEM, SLH-DSA, Corona, PQCrypto unified | Safe (all three FIPS) | FIPS 203/204/205 | Deployed |
+| 13 | Smart contracts | SafeMLDSASigner, SafeCoronaSigner, QuantumSafe base | Safe (precompile-backed) | FIPS 204 | Deployed |
 
-**EOA mitigation**: EOA transactions use secp256k1 ECDSA for wallet compatibility. PQ finality is achieved because Quasar consensus validators sign blocks with BLS + Ringtail + ML-DSA. A quantum adversary who forges an EOA signature still cannot finalize a block without compromising all three consensus assumptions.
+**EOA mitigation**: EOA transactions use secp256k1 ECDSA for wallet compatibility. PQ finality is achieved because Quasar consensus validators sign blocks with BLS + Corona + ML-DSA. A quantum adversary who forges an EOA signature still cannot finalize a block without compromising all three consensus assumptions.
 
 ## Quasar Consensus
 
@@ -99,7 +99,7 @@ Quasar is a triple-hybrid consensus protocol using three independent hardness as
 | Component | Assumption | PQ Safety |
 |-----------|------------|-----------|
 | BLS (BN254) | Discrete log on elliptic curves | Classical only |
-| Ringtail | Module-LWE (lattice) | PQ-safe |
+| Corona | Module-LWE (lattice) | PQ-safe |
 | ML-DSA-65 | Module-LWE + Module-SIS | PQ-safe (FIPS 204) |
 
 Block finality requires valid signatures from all three schemes. An adversary must break discrete log AND Module-LWE AND Module-SIS simultaneously.
@@ -109,7 +109,7 @@ Block finality requires valid signatures from all three schemes. An adversary mu
 Smart Accounts (ERC-4337 compliant) bypass the secp256k1 constraint via signature verification precompiles:
 
 - **SafeMLDSASigner**: Validates ML-DSA-65 signatures via precompile at `0x0130`/`0x0131`. Implements ERC-1271.
-- **SafeRingtailSigner**: Validates Ringtail lattice signatures via precompile at `0x0150`/`0x0151`.
+- **SafeCoronaSigner**: Validates Corona lattice signatures via precompile at `0x0150`/`0x0151`.
 - **QuantumSafe**: Base contract for Smart Accounts. Routes verification to the appropriate PQ precompile.
 
 ## On-Chain Precompiles
@@ -124,8 +124,8 @@ All activated at genesis on all networks.
 | 0x0131 | ML-DSA Verify | 10,000 | -- |
 | 0x0140 | SLH-DSA Sign | -- | 50,000 |
 | 0x0141 | SLH-DSA Verify | 15,000 | -- |
-| 0x0150 | Ringtail Sign | -- | 30,000 |
-| 0x0151 | Ringtail Verify | 12,000 | -- |
+| 0x0150 | Corona Sign | -- | 30,000 |
+| 0x0151 | Corona Verify | 12,000 | -- |
 | 0x0160 | PQCrypto Unified | varies | varies |
 
 ## Cloud HSM for Master Keys
@@ -141,7 +141,7 @@ Four threshold protocols deployed:
 | CGGMP21 | secp256k1 (ECDSA) | EVM transaction signing |
 | FROST | Ed25519 (EdDSA) | SOL/TON signing |
 | BLS | BN254 | Consensus aggregation |
-| Ringtail | Module-LWE (lattice) | PQ-safe threshold signing |
+| Corona | Module-LWE (lattice) | PQ-safe threshold signing |
 
 ## Harvest-Now-Decrypt-Later: Closed
 
