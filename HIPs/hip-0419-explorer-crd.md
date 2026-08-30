@@ -47,7 +47,7 @@ spec:
     - name: INDEXER_URL
       value: http://localhost:80
     - name: RPC_URL
-      value: https://api.lux.network/mainnet/ext/bc/hanzo/rpc
+      value: https://api.lux.network/mainnet/v1/chain/hanzo/rpc
   ingress:
     enabled: true
     hosts:
