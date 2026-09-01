@@ -173,7 +173,6 @@ Report generation
 | **Periodic review** | 1,000 | 2 per sample |
 | **Incident response** | As needed | 3 per sample |
 
-### Inter-Rater Reliability
 
 | Metric | Target |
 |--------|--------|
