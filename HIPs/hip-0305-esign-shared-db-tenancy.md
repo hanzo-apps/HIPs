@@ -1,14 +1,13 @@
 ---
 hip: 0305
 title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
-author: Zach Kelling (zach@hanzo.ai)
+author: Hanzo AI (research@hanzo.ai)
 type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-06-21
 requires: HIP-0302
 ---
-
 
 # HIP-0305: esign: shared-DB tenancy via team-where, not file-per-tenant
 

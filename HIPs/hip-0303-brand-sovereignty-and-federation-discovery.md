@@ -1,7 +1,7 @@
 ---
 hip: 0303
 title: "Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery"
-author: Zach Kelling (zach@hanzo.ai)
+author: Hanzo AI (research@hanzo.ai)
 type: Meta
 category: Governance
 status: Living
@@ -10,8 +10,6 @@ requires: HIP-0014, HIP-0018
 references: LP-0010
 tags: [brand, white-label, federation, governance, pointer]
 ---
-
-
 
 # HIP-0303: Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery
 

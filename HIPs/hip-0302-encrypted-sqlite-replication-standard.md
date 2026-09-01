@@ -1,14 +1,13 @@
 ---
 hip: 0302
 title: "Hanzo Replicate: Encrypted SQLite Durability for Base Services"
-author: Zach Kelling (zach@hanzo.ai)
+author: Hanzo AI (research@hanzo.ai)
 type: Standards Track
 category: Infrastructure
 status: Final
 created: 2026-04-09
 requires: HIP-0027, HIP-0065
 ---
-
 
 # HIP-0302: Hanzo Replicate: Encrypted SQLite Durability for Base Services
 
