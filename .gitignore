@@ -3,6 +3,10 @@ docs/.next/
 docs/.docs/
 docs/out/
 docs/public/search-index.json
+docs/public/llms.txt
+docs/public/catalog.json
+docs/public/categories/
+docs/public/hips/
 node_modules/
 .turbo/
 *.tsbuildinfo
